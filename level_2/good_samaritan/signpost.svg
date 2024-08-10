@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   sodipodi:docname="signpost.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.4485269"
+     inkscape:cx="282.35581"
+     inkscape:cy="385.56411"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="rect6"
+       style="fill:#000000;stroke:none;stroke-width:0.243422;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       d="m 44.589606,68.86442 v 1.963704 H 24.216693 v 12.700005 h 20.372913 v 2.16214 h -12.28555 l -5.062224,6.0818 5.062224,6.6182 h 12.28555 v 72.074171 h 6.35 V 98.390269 h 14.40223 v -12.7 h -14.40223 v -2.16214 h 21.6607 l 5.06222,-6.618722 -5.06222,-6.081283 h -21.6607 V 68.86442 Z" />
+    <text
+       xml:space="preserve"
+       style="font-size:11.2889px;line-height:1.25;font-family:'Sassoon Primary Std';-inkscape-font-specification:'Sassoon Primary Std, Normal';text-decoration-color:#000000;white-space:pre;fill:#808080;stroke-width:0.499999;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       x="32.135185"
+       y="95.460831"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="fill:#808080;stroke-width:0.499999"
+         x="32.135185"
+         y="95.460831">Jericho</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:11.2889px;line-height:1.25;font-family:'Sassoon Primary Std';-inkscape-font-specification:'Sassoon Primary Std, Normal';text-decoration-color:#000000;white-space:pre;fill:#808080;stroke-width:0.499999;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       x="26.221695"
+       y="80.976639"
+       id="text1-3"><tspan
+         sodipodi:role="line"
+         id="tspan1-4"
+         style="fill:#808080;stroke-width:0.499999"
+         x="26.221695"
+         y="80.976639">Jerusalem</tspan></text>
+    <path
+       id="rect7"
+       style="fill:#000000;stroke:none;stroke-width:0.382924;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       d="M 17.534847 99.632161 L 17.534847 125.03216 L 42.934847 125.03216 L 42.934847 99.632161 L 17.534847 99.632161 z M 27.059847 109.15716 L 33.409847 109.15716 L 33.409847 115.50716 L 27.059847 115.50716 L 27.059847 109.15716 z " />
+    <path
+       style="fill:none;stroke:#808080;stroke-width:0.499999;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       d="m 44.589606,70.828123 h 6.35"
+       id="path8" />
+    <path
+       style="fill:none;stroke:#808080;stroke-width:0.499999;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       d="m 44.589606,83.528129 h 6.35"
+       id="path8-7" />
+    <path
+       style="fill:none;stroke:#808080;stroke-width:0.499999;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       d="m 44.589606,85.690269 h 6.35"
+       id="path8-9" />
+    <path
+       style="fill:none;stroke:#808080;stroke-width:0.499999;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       d="m 44.589606,98.390269 h 6.35"
+       id="path8-6" />
+  </g>
+</svg>
