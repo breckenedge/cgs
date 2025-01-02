@@ -4,3 +4,4 @@ Lasercut files for making materials for Catechesis of the Good Shepherd
 
 - [Questrial](https://fonts.google.com/specimen/Questrial)
 - [Sassoon Primary Std](https://dafontfamily.net/sassoon-font-free-download/)
+- [Courgette](https://fonts.google.com/specimen/Courgette)
