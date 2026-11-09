@@ -20,8 +20,10 @@
 // sheets to overlap, so they can't shingle. Sized for cardstock; the
 // throat and finger heights are 2 and 1 layers at 0.2 mm.
 //
-// Assembly: set the slider on the table, lower the base onto it so the
-// fingers drop into their floor slots, then press the top onto its pegs.
+// Assembly: set the slider in the frame behind the base and slide it
+// forward into the dovetail channels until the latch arms at the ends of
+// its crossbar click past the stops on the frame rails (squeeze the arms
+// inward to take it out again). Press the top onto its pegs.
 // Hook a band between each crossbar post and the frame post behind it.
 // For the follower, hook a band from each fin notch down through the end
 // wall slot to the leaning post outside.
@@ -57,13 +59,18 @@ peg_d = 3;
 peg_h = 2;
 
 /* [Slider] */
-bar_w = 8;
-bar_t = 3;
+bar_w = 10;              // top of the dovetail; the bottom is narrower
+bar_t = 3;               // bars flare at 45 degrees over their full height
 finger_w = 2;
 finger_l = 4;
 crossbar_d = 10;
 crossbar_h = 6;
 fit = 0.3;               // sliding clearance, each side
+latch_arm_l = 22;        // long and thin so PLA flexes without cracking
+latch_arm_t = 1.8;
+latch_tooth = 1.5;       // how far the tooth sticks out past the arm
+latch_tooth_l = 3;
+latch_stop_l = 3;
 
 /* [Rubber bands] */
 // Sized for 1-3/4" (#12) bands; post spacing at rest
@@ -112,6 +119,13 @@ frame_post_y = crossbar_post_y - return_band_gap;
 frame_back_y = frame_post_y - 5;
 rail_w = 6;
 
+// crossbar ends carry latch arms that run back alongside the frame rails;
+// the tooth on each arm catches a stop on the rail at rest
+crossbar_x0 = outer_x0 + rail_w + 2;
+crossbar_x1 = outer_x1 - rail_w - 2;
+latch_tip_y = crossbar_front - crossbar_d - latch_arm_l;
+latch_stop_y = latch_tip_y - latch_stop_l;
+
 // follower band anchors, outside each end wall
 ear_l = 14;
 ear_w = 12;
@@ -129,6 +143,21 @@ module band_post(cap = true) {
             cylinder(d1 = post_d, d2 = post_d + 3, h = 1.5);
             translate([0, 0, 1.5]) cylinder(d = post_d + 3, h = 1);
         }
+}
+
+// dovetail cross-section in x-z: bottom_w at z = 0, flaring at 45 degrees
+module dovetail(bottom_w, h, z0 = 0) {
+    polygon([
+        [-bottom_w / 2 - z0, z0], [bottom_w / 2 + z0, z0],
+        [bottom_w / 2 + h, h], [-bottom_w / 2 - h, h],
+    ]);
+}
+
+module dovetail_bar(y0, y1) {
+    translate([0, y1, 0])
+        rotate([90, 0, 0])
+            linear_extrude(y1 - y0)
+                dovetail(bar_w - 2 * bar_t, bar_t);
 }
 
 module base() {
@@ -154,6 +183,11 @@ module base() {
             box(outer_x0, outer_x1, frame_back_y, frame_post_y + 5, 0, floor_z);
             for (x = crossbar_post_xs)
                 translate([x, frame_post_y, floor_z]) band_post();
+            // stops the latch teeth catch on
+            box(outer_x0 + rail_w - 0.01, crossbar_x0 - 0.5,
+                latch_stop_y, latch_tip_y, 0, floor_z);
+            box(crossbar_x1 + 0.5, outer_x1 - rail_w + 0.01,
+                latch_stop_y, latch_tip_y, 0, floor_z);
             // ears with posts for the follower bands, leaning outward so the
             // bands ride down to the base of the post
             for (s = [-1, 1]) {
@@ -165,12 +199,15 @@ module base() {
             }
         }
         for (x = finger_xs) {
-            // channel for the slider bar, open underneath and at the back
-            box(x - bar_w / 2 - fit, x + bar_w / 2 + fit,
-                back_y - 1, finger_slot_front + 2, -1, channel_h);
-            // finger slot through the floor (and under the back wall)
+            // dovetail channel for the slider bar, open at the back
+            translate([x, finger_slot_front + 2, 0])
+                rotate([90, 0, 0])
+                    linear_extrude(finger_slot_front + 2 - back_y + 1)
+                        dovetail(bar_w - 2 * bar_t + 2 * fit * sqrt(2), channel_h, -1);
+            // finger slot through the floor (and under the back wall),
+            // open at the back so the fingers can slide in
             box(x - finger_w / 2 - fit, x + finger_w / 2 + fit,
-                finger_slot_back, finger_slot_front, -1, floor_z + 1);
+                back_y - 1, finger_slot_front, -1, floor_z + 1);
         }
         // slots in the end walls for the follower bands
         for (x = [[outer_x0 - 1, 1], [inner_l - 1, outer_x1 + 1]])
@@ -208,7 +245,7 @@ module top() {
 // modeled at rest, retracted, with the finger fronts at finger_rest
 module slider() {
     for (x = finger_xs) {
-        box(x - bar_w / 2, x + bar_w / 2, crossbar_front, finger_rest + 1, 0, bar_t);
+        translate([x, 0, 0]) dovetail_bar(crossbar_front - 0.01, finger_rest + 1);
         // finger: square front for pushing, ramped back for sliding under
         // the stack on the return stroke
         translate([x - finger_w / 2, 0, 0])
@@ -222,8 +259,21 @@ module slider() {
                         [finger_rest - finger_l, 0],
                     ]);
     }
-    box(crossbar_post_xs[0] - bar_w, crossbar_post_xs[1] + bar_w,
-        crossbar_front - crossbar_d, crossbar_front, 0, crossbar_h);
+    box(crossbar_x0, crossbar_x1, crossbar_front - crossbar_d, crossbar_front, 0, crossbar_h);
+    // latch arms: the tooth's ramped front pushes the arm inward past the
+    // stop as the slider goes in; its square back then holds against it
+    for (s = [-1, 1]) {
+        edge = s < 0 ? crossbar_x0 : crossbar_x1;
+        box(min(edge, edge - s * latch_arm_t), max(edge, edge - s * latch_arm_t),
+            latch_tip_y, crossbar_front - crossbar_d + 0.01, 0, crossbar_h);
+        translate([edge, 0, 0])
+            linear_extrude(crossbar_h)
+                polygon([
+                    [0, latch_tip_y],
+                    [s * latch_tooth, latch_tip_y],
+                    [0, latch_tip_y + latch_tooth_l],
+                ]);
+    }
     for (x = crossbar_post_xs)
         translate([x, crossbar_post_y, crossbar_h]) band_post();
 }
