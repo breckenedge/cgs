@@ -1,11 +1,12 @@
 // Sharpie marking station for 1" x 5.5" cutting-practice strips.
 //
-// A gravity-feed dispenser in four parts:
+// A gravity-feed dispenser:
 //   base     - a magazine that holds a stack of strips, with a floor that
 //              continues forward into a marking station
-//   top      - a slotted plate over the marking station; its back edge is
-//              the magazine's front wall, raised just enough off the floor
+//   gate     - the magazine's front wall, raised just enough off the floor
 //              (the "throat") to let one strip through but not two
+//   template - a slotted plate over the marking station; it lifts off its
+//              pegs so templates with straight or curved slots can be swapped
 //   slider   - a comb of bars under the base; fingers poke up through the
 //              floor just under one sheet high and push the bottom strip
 //   follower - a plate that sits on the stack, held down by rubber bands so
@@ -23,13 +24,14 @@
 // Assembly: set the slider in the frame behind the base and slide it
 // forward into the dovetail channels until the latch arms at the ends of
 // its crossbar click past the stops on the frame rails (squeeze the arms
-// inward to take it out again). Press the top onto its pegs.
+// inward to take it out again). Press the gate and a template onto their
+// pegs.
 // Hook a band between each crossbar post and the frame post behind it.
 // For the follower, hook a band from each fin notch down through the end
 // wall slot to the leaning post outside.
 // Units are mm.
 
-part = "assembled"; // ["assembled", "print", "base", "top", "slider", "follower"]
+part = "assembled"; // ["assembled", "print", "base", "gate", "template", "slider", "follower"]
 
 /* [Paper] */
 inch = 25.4;
@@ -44,6 +46,9 @@ pusher_h = 0.2;          // finger height above the floor, under 1 sheet
 strips = 11;             // 11 -> 1/2" strips
 
 /* [Slots] */
+template = "arc"; // ["straight", "arc"]
+// How far an arc bows out over the strip's 1" width
+arc_sagitta = 3;
 slot_w = 1.6;            // width at the paper
 slot_top_w = 4;          // width at the top, so the Sharpie's cone reaches down
 slot_overrun = 2;        // how far slots run past the paper edges
@@ -52,15 +57,17 @@ slot_overrun = 2;        // how far slots run past the paper edges
 mag_h = 30;              // magazine height above the floor
 wall_t = 3;
 end_wall_t = 7;          // wide enough for the top's locating pegs
-gate_t = 3;              // magazine front wall, part of the top
+gate_t = 3;
+gate_foot = 9;           // depth of the gate's base plate, with room for its pegs
 plate_t = 2.5;
 front_margin = 4;
 peg_d = 3;
 peg_h = 2;
 
 /* [Slider] */
-bar_w = 10;              // top of the dovetail; the bottom is narrower
-bar_t = 3;               // bars flare at 45 degrees over their full height
+bar_bottom_w = 4;        // dovetail: narrow where the bar sits on the table,
+bar_flare = 1.5;         // flaring at 45 degrees over this height
+bar_t = 3;
 finger_w = 2;
 finger_l = 4;
 crossbar_d = 10;
@@ -91,12 +98,20 @@ pitch = paper_l / strips;
 inner_l = paper_l + paper_clearance;
 inner_w = paper_w + paper_clearance;   // magazine depth, y in [0, inner_w]
 
-channel_h = bar_t + 2 * fit;
-floor_z = channel_h + 1.6;             // keep a multiple of the layer height
+// channel profile: the bar's dovetail plus clearance, then a roof closing
+// at 45 degrees up to the finger slot so it prints without support
+channel_bottom_half = bar_bottom_w / 2 + fit * sqrt(2);
+channel_half = channel_bottom_half + bar_flare;
+finger_slot_half = finger_w / 2 + fit;
+channel_peak = bar_t + fit + channel_half - finger_slot_half;
+layer_h = 0.2;
+floor_z = ceil((channel_peak + 0.8) / layer_h) * layer_h;
 
-// where the strip's back edge sits in the marking station
-station_y = inner_w + gate_t + slot_overrun + 0.5;
-front_y = station_y + paper_w + slot_overrun + front_margin;
+// where the strip's back edge sits in the marking station; slots have
+// rounded ends that reach slot_top_w / 2 past their centerline
+template_y = inner_w + gate_foot;
+station_y = template_y + slot_overrun + slot_top_w / 2 + 2;
+front_y = station_y + paper_w + slot_overrun + slot_top_w / 2 + front_margin;
 
 finger_rest = -0.5;                    // finger front face, just behind the stack
 travel = station_y - finger_rest;
@@ -109,7 +124,10 @@ finger_xs = [for (f = [0.15, 0.5, 0.85]) (floor(strips * f) + 0.5) * pitch];
 
 outer_x0 = -end_wall_t;
 outer_x1 = inner_l + end_wall_t;
-peg_ys = [inner_w + gate_t + 4, front_y - 4];
+peg_xs = [outer_x0 / 2, inner_l - outer_x0 / 2];
+gate_peg_y = inner_w + (gate_t + gate_foot) / 2;
+template_peg_ys = [template_y + 4, front_y - 4];
+peg_ys = concat([gate_peg_y], template_peg_ys);
 
 // slider crossbar at rest, and the frame behind it the return bands pull to
 crossbar_front = back_y - travel - 1;
@@ -145,19 +163,31 @@ module band_post(cap = true) {
         }
 }
 
-// dovetail cross-section in x-z: bottom_w at z = 0, flaring at 45 degrees
-module dovetail(bottom_w, h, z0 = 0) {
+// cross-sections in x-z, centered on the bar
+module bar_profile() {
+    b = bar_bottom_w / 2;
     polygon([
-        [-bottom_w / 2 - z0, z0], [bottom_w / 2 + z0, z0],
-        [bottom_w / 2 + h, h], [-bottom_w / 2 - h, h],
+        [-b, 0], [b, 0], [b + bar_flare, bar_flare], [b + bar_flare, bar_t],
+        [-b - bar_flare, bar_t], [-b - bar_flare, bar_flare],
     ]);
 }
 
-module dovetail_bar(y0, y1) {
+module channel_profile() {
+    b = channel_bottom_half;
+    top = bar_t + fit;
+    polygon([
+        [-(b - 1), -1], [b - 1, -1],
+        [channel_half, bar_flare], [channel_half, top],
+        [finger_slot_half, channel_peak], [-finger_slot_half, channel_peak],
+        [-channel_half, top], [-channel_half, bar_flare],
+    ]);
+}
+
+module extrude_y(y0, y1) {
     translate([0, y1, 0])
         rotate([90, 0, 0])
             linear_extrude(y1 - y0)
-                dovetail(bar_w - 2 * bar_t, bar_t);
+                children();
 }
 
 module base() {
@@ -174,7 +204,7 @@ module base() {
             for (x = [[outer_x0, 0], [inner_l, outer_x1]])
                 box(x[0], x[1], inner_w, front_y, 0, floor_z + throat);
             // pegs locating the top
-            for (x = [outer_x0 / 2, inner_l - outer_x0 / 2], y = peg_ys)
+            for (x = peg_xs, y = peg_ys)
                 translate([x, y, floor_z + throat])
                     cylinder(d = peg_d, h = peg_h);
             // frame behind the slider for the return bands
@@ -200,10 +230,8 @@ module base() {
         }
         for (x = finger_xs) {
             // dovetail channel for the slider bar, open at the back
-            translate([x, finger_slot_front + 2, 0])
-                rotate([90, 0, 0])
-                    linear_extrude(finger_slot_front + 2 - back_y + 1)
-                        dovetail(bar_w - 2 * bar_t + 2 * fit * sqrt(2), channel_h, -1);
+            translate([x, 0, 0])
+                extrude_y(back_y - 1, finger_slot_front + 2) channel_profile();
             // finger slot through the floor (and under the back wall),
             // open at the back so the fingers can slide in
             box(x - finger_w / 2 - fit, x + finger_w / 2 + fit,
@@ -216,27 +244,47 @@ module base() {
     }
 }
 
-module slot(len) {
-    hull() {
-        translate([-slot_w / 2, 0, -0.01])
-            cube([slot_w, len, 0.01]);
-        translate([-slot_top_w / 2, 0, plate_t])
-            cube([slot_top_w, len, 0.01]);
+// sideways offset of a slot's centerline at distance y across the strip
+// (0 at the back edge, paper_w at the front)
+function slot_offset(y) =
+    template == "arc"
+        ? let(r = (paper_w * paper_w / 4 + arc_sagitta * arc_sagitta) / (2 * arc_sagitta),
+              d = y - paper_w / 2)
+          sqrt(r * r - d * d) - (r - arc_sagitta)
+        : 0;
+
+// a slot swept along its centerline: narrow at the paper, wide at the top
+// so the Sharpie's cone reaches down
+module slot() {
+    n = template == "straight" ? 1 : 24;
+    ys = [for (i = [0 : n]) -slot_overrun + i * (paper_w + 2 * slot_overrun) / n];
+    for (i = [0 : n - 1])
+        hull()
+            for (y = [ys[i], ys[i + 1]])
+                translate([slot_offset(y), y, -0.01])
+                    cylinder(d1 = slot_w, d2 = slot_top_w, h = plate_t + 0.02);
+}
+
+// modeled sitting on its own bottom face; it rests at floor_z + throat
+module gate() {
+    difference() {
+        union() {
+            box(outer_x0, outer_x1, inner_w, template_y, 0, plate_t);
+            box(outer_x0, outer_x1, inner_w, inner_w + gate_t, 0, mag_h - throat);
+        }
+        for (x = peg_xs)
+            translate([x, gate_peg_y, -1])
+                cylinder(d = peg_d + 2 * fit, h = plate_t + 2);
     }
 }
 
 // modeled sitting on its own bottom face; it rests at floor_z + throat
-module top() {
+module template() {
     difference() {
-        union() {
-            box(outer_x0, outer_x1, inner_w, front_y, 0, plate_t);
-            // gate: the magazine's front wall
-            box(outer_x0, outer_x1, inner_w, inner_w + gate_t, 0, mag_h - throat);
-        }
+        box(outer_x0, outer_x1, template_y + fit, front_y, 0, plate_t);
         for (i = [1 : strips - 1])
-            translate([i * pitch, station_y - slot_overrun, 0])
-                slot(paper_w + 2 * slot_overrun);
-        for (x = [outer_x0 / 2, inner_l - outer_x0 / 2], y = peg_ys)
+            translate([i * pitch, station_y, 0]) slot();
+        for (x = peg_xs, y = template_peg_ys)
             translate([x, y, -1])
                 cylinder(d = peg_d + 2 * fit, h = plate_t + 2);
     }
@@ -245,7 +293,8 @@ module top() {
 // modeled at rest, retracted, with the finger fronts at finger_rest
 module slider() {
     for (x = finger_xs) {
-        translate([x, 0, 0]) dovetail_bar(crossbar_front - 0.01, finger_rest + 1);
+        translate([x, 0, 0])
+            extrude_y(crossbar_front - 0.01, finger_rest + 1) bar_profile();
         // finger: square front for pushing, ramped back for sliding under
         // the stack on the return stroke
         translate([x - finger_w / 2, 0, 0])
@@ -304,19 +353,24 @@ module follower() {
 }
 
 if (part == "base") base();
-else if (part == "top") top();
+else if (part == "gate") gate();
+else if (part == "template") template();
 else if (part == "slider") slider();
 else if (part == "follower") follower();
 else if (part == "print") {
     base();
-    translate([0, front_y + 10 - inner_w, 0]) top();
+    translate([0, front_y + 10 - inner_w, 0]) gate();
+    translate([0, front_y + 10 - inner_w + gate_foot + 5, 0]) template();
     slider_dy = frame_back_y - 10 - (finger_rest + 1);
     translate([0, slider_dy, 0]) slider();
     translate([0, slider_dy + crossbar_front - crossbar_d - 10 - inner_w, 0]) follower();
 }
 else if (part == "assembled") {
     base();
-    color("orange", 0.85) translate([0, 0, floor_z + throat]) top();
+    color("orange", 0.85) translate([0, 0, floor_z + throat]) {
+        gate();
+        template();
+    }
     color("steelblue") slider();
     color("seagreen") translate([0, 0, floor_z + 15]) follower();
 }
